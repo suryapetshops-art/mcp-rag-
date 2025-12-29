@@ -1,0 +1,28 @@
+name: Demo API_KEY usage
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt || true
+      - name: Check API key presence
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          python - <<'PY'
+import os
+if os.getenv("API_KEY"):
+    print("API_KEY is set (hidden)")
+else:
+    print("API_KEY is missing")
+PY
