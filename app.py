@@ -1,44 +1,23 @@
 import streamlit as st
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.llms import HuggingFacePipeline
-from langchain.chains import RetrievalQA
-from pypdf import PdfReader
-import tempfile
+from openai import OpenAI
 
-st.set_page_config(page_title="Telugu RAG AI")
-st.title("🤖 Telugu PDF AI Assistant")
+st.title("RAG + MCP AI")
 
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-if uploaded_file:
-    reader = PdfReader(uploaded_file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
+question = st.text_input("Ask something")
 
-    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    docs = splitter.split_text(text)
+if st.button("Submit"):
+    if question.strip() == "":
+        st.warning("Please type a question")
+    else:
+        with st.spinner("Thinking..."):
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": question}
+                ]
+            )
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
-    vectorstore = FAISS.from_texts(docs, embeddings)
-
-    llm = HuggingFacePipeline.from_model_id(
-        model_id="google/flan-t5-small",
-        task="text2text-generation"
-    )
-
-    qa = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=vectorstore.as_retriever()
-    )
-
-    question = st.text_input("మీ ప్రశ్న ఇక్కడ టైప్ చేయండి (Telugu / English)")
-
-    if question:
-        answer = qa.run(question)
-        st.success(answer)
+        st.write("### Answer")
+        st.write(response.choices[0].message.content)
