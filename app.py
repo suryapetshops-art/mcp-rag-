@@ -11,4 +11,4 @@ if st.button("Submit"):
     if question:
         st.success(f"You asked: {question}")
     else:
-        st.warning("Please enter a question"0
+        st.warning("Please enter a question")
